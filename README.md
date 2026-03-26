@@ -21,16 +21,13 @@ Register the UDFs in your Flink SQL environment:
 
 ```sql
 -- Create a RoaringBitmap from a column of integer values
-SELECT rb_build_agg(user_id) FROM events GROUP BY dimension;
+SELECT BITMAP_BUILD_AGG(user_id) FROM events GROUP BY dimension;
 
 -- Get the cardinality of a RoaringBitmap
-SELECT rb_cardinality(bitmap) FROM bitmaps;
+SELECT BITMAP_CARDINALITY(bitmap) FROM bitmaps;
 
 -- Compute the union (OR) of multiple RoaringBitmaps
-SELECT rb_or_agg(bitmap) FROM bitmaps GROUP BY dimension;
-```
-
-## Building from Source
+SELECT BITMAP_OR_AGG(bitmap) FROM bitmaps GROUP BY dimension;
 
 ```bash
 mvn clean package
