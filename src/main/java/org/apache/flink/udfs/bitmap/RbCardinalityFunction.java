@@ -21,10 +21,29 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.roaringbitmap.RoaringBitmap;
 
 /**
- * BITMAP_CARDINALITY(bitmap_bytes) -> BIGINT
+ * rb_cardinality(bitmap BYTES) -> BIGINT
+ *
+ * <p>Returns the number of distinct integers stored in a serialized
+ * RoaringBitmap. This is the standard way to compute unique counts
+ * (e.g., unique visitors) from a bitmap column.
+ *
+ * <p>Usage in Flink SQL (after registering the JAR):
+ * <pre>{@code
+ * CREATE TEMPORARY FUNCTION rb_cardinality
+ *     AS 'org.apache.flink.udfs.bitmap.RbCardinalityFunction';
+ *
+ * SELECT rb_cardinality(bitmap) FROM bitmaps;
+ * }</pre>
  */
-public class BitmapCardinalityFunction extends ScalarFunction {
+public class RbCardinalityFunction extends ScalarFunction {
 
+    /**
+     * Returns the cardinality (count of unique integers) of the given bitmap.
+     *
+     * @param bitmapBytes serialized RoaringBitmap bytes
+     * @return number of unique integers, or null if input is null,
+     *         or 0 if the bitmap is empty
+     */
     public Long eval(byte[] bitmapBytes) {
         if (bitmapBytes == null) {
             return null;

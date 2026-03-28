@@ -25,11 +25,17 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+/** Utility methods for serializing and deserializing {@link RoaringBitmap}. */
 public final class BitmapUtils {
 
-    private BitmapUtils() {
-    }
+    private BitmapUtils() {}
 
+    /**
+     * Deserializes a {@link RoaringBitmap} from a byte array.
+     *
+     * @param bytes the serialized bitmap bytes
+     * @return deserialized RoaringBitmap, or null if input is null
+     */
     public static RoaringBitmap fromBytes(byte[] bytes) {
         if (bytes == null) {
             return null;
@@ -45,6 +51,12 @@ public final class BitmapUtils {
         }
     }
 
+    /**
+     * Serializes a {@link RoaringBitmap} to a byte array.
+     *
+     * @param bitmap the bitmap to serialize
+     * @return serialized byte array, or null if input is null
+     */
     public static byte[] toBytes(RoaringBitmap bitmap) {
         if (bitmap == null) {
             return null;

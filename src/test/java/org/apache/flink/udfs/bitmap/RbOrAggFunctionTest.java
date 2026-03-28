@@ -21,10 +21,11 @@ import org.junit.jupiter.api.Test;
 import org.roaringbitmap.RoaringBitmap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-class BitmapOrAggFunctionTest {
+class RbOrAggFunctionTest {
 
-    private final BitmapOrAggFunction function = new BitmapOrAggFunction();
+    private final RbOrAggFunction function = new RbOrAggFunction();
 
     @Test
     void testOrAgg() {
@@ -43,9 +44,40 @@ class BitmapOrAggFunctionTest {
         byte[] resultBytes = function.getValue(acc);
         RoaringBitmap result = BitmapUtils.fromBytes(resultBytes);
 
+        // union of {1,2} and {2,3} = {1,2,3}
         assertEquals(3L, result.getLongCardinality());
         assertEquals(true, result.contains(1));
         assertEquals(true, result.contains(2));
         assertEquals(true, result.contains(3));
+    }
+
+    @Test
+    void testNullInputIsIgnored() {
+        RoaringBitmap bitmap = new RoaringBitmap();
+        bitmap.add(10);
+
+        RoaringBitmap acc = function.createAccumulator();
+        function.accumulate(acc, BitmapUtils.toBytes(bitmap));
+        function.accumulate(acc, null);
+
+        byte[] resultBytes = function.getValue(acc);
+        RoaringBitmap result = BitmapUtils.fromBytes(resultBytes);
+
+        assertEquals(1L, result.getLongCardinality());
+    }
+
+    @Test
+    void testResetAccumulator() {
+        RoaringBitmap bitmap = new RoaringBitmap();
+        bitmap.add(1);
+        bitmap.add(2);
+
+        RoaringBitmap acc = function.createAccumulator();
+        function.accumulate(acc, BitmapUtils.toBytes(bitmap));
+        function.resetAccumulator(acc);
+
+        byte[] resultBytes = function.getValue(acc);
+        RoaringBitmap result = BitmapUtils.fromBytes(resultBytes);
+        assertEquals(0L, result.getLongCardinality());
     }
 }

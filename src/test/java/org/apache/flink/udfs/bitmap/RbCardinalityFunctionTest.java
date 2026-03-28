@@ -17,37 +17,36 @@
 
 package org.apache.flink.udfs.bitmap;
 
-import org.apache.flink.table.functions.AggregateFunction;
+import org.junit.jupiter.api.Test;
 import org.roaringbitmap.RoaringBitmap;
 
-/**
- * BITMAP_OR_AGG(bitmap_bytes) -> BYTES
- *
- * Aggregates multiple serialized bitmaps using OR (union).
- */
-public class BitmapOrAggFunction extends AggregateFunction<byte[], RoaringBitmap> {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-    @Override
-    public RoaringBitmap createAccumulator() {
-        return new RoaringBitmap();
+class RbCardinalityFunctionTest {
+
+    private final RbCardinalityFunction function = new RbCardinalityFunction();
+
+    @Test
+    void testNullInput() {
+        assertNull(function.eval(null));
     }
 
-    public void accumulate(RoaringBitmap acc, byte[] bitmapBytes) {
-        if (bitmapBytes == null) {
-            return;
-        }
-
-        RoaringBitmap input = BitmapUtils.fromBytes(bitmapBytes);
-        if (input != null) {
-            acc.or(input);
-        }
+    @Test
+    void testEmptyBitmap() {
+        RoaringBitmap bitmap = new RoaringBitmap();
+        byte[] bytes = BitmapUtils.toBytes(bitmap);
+        assertEquals(0L, function.eval(bytes));
     }
 
-    @Override
-    public byte[] getValue(RoaringBitmap acc) {
-        if (acc == null) {
-            return null;
-        }
-        return BitmapUtils.toBytes(acc);
+    @Test
+    void testCardinality() {
+        RoaringBitmap bitmap = new RoaringBitmap();
+        bitmap.add(1);
+        bitmap.add(2);
+        bitmap.add(100);
+
+        byte[] bytes = BitmapUtils.toBytes(bitmap);
+        assertEquals(3L, function.eval(bytes));
     }
 }
