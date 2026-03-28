@@ -15,19 +15,36 @@ This project provides a temporary solution for RoaringBitmap support in Flink SQ
 
 Download the latest release JAR from the [Releases](https://github.com/flink-extended/flink-roaringbitmap/releases) page, and add it to your Flink `lib/` directory or include it in your job's classpath.
 
-### Usage
+### Register the UDFs
 
-Register the UDFs in your Flink SQL environment:
+Run these statements in your Flink SQL environment before using the functions:
 
 ```sql
--- Create a RoaringBitmap from a column of integer values
+CREATE TEMPORARY FUNCTION rb_build_agg
+    AS 'org.apache.flink.udfs.bitmap.RbBuildAggFunction';
+
+CREATE TEMPORARY FUNCTION rb_cardinality
+    AS 'org.apache.flink.udfs.bitmap.RbCardinalityFunction';
+
+CREATE TEMPORARY FUNCTION rb_or_agg
+    AS 'org.apache.flink.udfs.bitmap.RbOrAggFunction';
+```
+
+### Usage
+
+```sql
+-- Build a bitmap from a column of integer user IDs
 SELECT rb_build_agg(user_id) FROM events GROUP BY dimension;
 
--- Get the cardinality of a RoaringBitmap
+-- Get the unique visitor count from a stored bitmap
 SELECT rb_cardinality(bitmap) FROM bitmaps;
 
--- Compute the union (OR) of multiple RoaringBitmaps
-SELECT rb_or_agg(bitmap) FROM bitmaps GROUP BY dimension;
+-- Roll-up: union per-minute bitmaps into an hourly unique visitor count
+SELECT
+    hour_start,
+    rb_cardinality(rb_or_agg(minute_bitmap)) AS unique_visitors
+FROM minute_stats
+GROUP BY hour_start;
 ```
 
 ## Building from Source
@@ -35,6 +52,8 @@ SELECT rb_or_agg(bitmap) FROM bitmaps GROUP BY dimension;
 ```bash
 mvn clean package
 ```
+
+The shaded JAR will be at `target/flink-roaringbitmap-0.1.0-SNAPSHOT.jar`.
 
 ## License
 
