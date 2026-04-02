@@ -40,6 +40,11 @@ class RbCardinalityFunctionTest {
     }
 
     @Test
+    void testEmptyByteArray() {
+        assertEquals(0L, function.eval(new byte[0]));
+    }
+
+    @Test
     void testCardinality() {
         RoaringBitmap bitmap = new RoaringBitmap();
         bitmap.add(1);

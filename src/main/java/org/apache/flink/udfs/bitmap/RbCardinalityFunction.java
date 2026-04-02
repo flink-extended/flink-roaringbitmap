@@ -20,12 +20,14 @@ package org.apache.flink.udfs.bitmap;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.roaringbitmap.RoaringBitmap;
 
+import javax.annotation.Nullable;
+
 /**
  * rb_cardinality(bitmap BYTES) -> BIGINT
  *
  * <p>Returns the number of distinct integers stored in a serialized
- * RoaringBitmap. This is the standard way to compute unique counts
- * (e.g., unique visitors) from a bitmap column.
+ * RoaringBitmap. Used to compute unique counts (e.g., unique visitors)
+ * from a bitmap column.
  *
  * <p>Usage in Flink SQL (after registering the JAR):
  * <pre>{@code
@@ -44,7 +46,8 @@ public class RbCardinalityFunction extends ScalarFunction {
      * @return number of unique integers, or null if input is null,
      *         or 0 if the bitmap is empty
      */
-    public Long eval(byte[] bitmapBytes) {
+    @Nullable
+    public Long eval(@Nullable byte[] bitmapBytes) {
         if (bitmapBytes == null) {
             return null;
         }

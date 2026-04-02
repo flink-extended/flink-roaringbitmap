@@ -20,6 +20,8 @@ package org.apache.flink.udfs.bitmap;
 import org.junit.jupiter.api.Test;
 import org.roaringbitmap.RoaringBitmap;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -30,7 +32,7 @@ class RbBuildAggFunctionTest {
 
     @Test
     void testBuildFromMultipleValues() {
-        RoaringBitmap acc = function.createAccumulator();
+        BitmapAccumulator acc = function.createAccumulator();
         function.accumulate(acc, 1);
         function.accumulate(acc, 2);
         function.accumulate(acc, 3);
@@ -47,40 +49,55 @@ class RbBuildAggFunctionTest {
 
     @Test
     void testDuplicateValuesAreDeduped() {
-        RoaringBitmap acc = function.createAccumulator();
+        BitmapAccumulator acc = function.createAccumulator();
         function.accumulate(acc, 1);
         function.accumulate(acc, 1);
         function.accumulate(acc, 2);
 
         byte[] result = function.getValue(acc);
         RoaringBitmap bitmap = BitmapUtils.fromBytes(result);
-
-        // bitmap deduplicates automatically
         assertEquals(2L, bitmap.getLongCardinality());
     }
 
     @Test
     void testNullValueIsIgnored() {
-        RoaringBitmap acc = function.createAccumulator();
+        BitmapAccumulator acc = function.createAccumulator();
         function.accumulate(acc, null);
         function.accumulate(acc, 5);
 
         byte[] result = function.getValue(acc);
         RoaringBitmap bitmap = BitmapUtils.fromBytes(result);
-
         assertEquals(1L, bitmap.getLongCardinality());
     }
 
     @Test
     void testResetAccumulator() {
-        RoaringBitmap acc = function.createAccumulator();
+        BitmapAccumulator acc = function.createAccumulator();
         function.accumulate(acc, 1);
         function.accumulate(acc, 2);
 
         function.resetAccumulator(acc);
+        assertNull(function.getValue(acc));
+    }
 
-        byte[] result = function.getValue(acc);
+    @Test
+    void testMerge() {
+        BitmapAccumulator acc1 = function.createAccumulator();
+        function.accumulate(acc1, 1);
+        function.accumulate(acc1, 2);
+
+        BitmapAccumulator acc2 = function.createAccumulator();
+        function.accumulate(acc2, 3);
+        function.accumulate(acc2, 4);
+
+        BitmapAccumulator target = function.createAccumulator();
+        function.merge(target, Arrays.asList(acc1, acc2));
+
+        byte[] result = function.getValue(target);
         RoaringBitmap bitmap = BitmapUtils.fromBytes(result);
-        assertEquals(0L, bitmap.getLongCardinality());
+
+        assertEquals(4L, bitmap.getLongCardinality());
+        assertEquals(true, bitmap.contains(1));
+        assertEquals(true, bitmap.contains(4));
     }
 }

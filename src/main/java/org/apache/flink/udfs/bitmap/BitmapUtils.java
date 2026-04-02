@@ -19,6 +19,7 @@ package org.apache.flink.udfs.bitmap;
 
 import org.roaringbitmap.RoaringBitmap;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -36,7 +37,8 @@ public final class BitmapUtils {
      * @param bytes the serialized bitmap bytes
      * @return deserialized RoaringBitmap, or null if input is null
      */
-    public static RoaringBitmap fromBytes(byte[] bytes) {
+    @Nullable
+    public static RoaringBitmap fromBytes(@Nullable byte[] bytes) {
         if (bytes == null) {
             return null;
         }
@@ -57,7 +59,8 @@ public final class BitmapUtils {
      * @param bitmap the bitmap to serialize
      * @return serialized byte array, or null if input is null
      */
-    public static byte[] toBytes(RoaringBitmap bitmap) {
+    @Nullable
+    public static byte[] toBytes(@Nullable RoaringBitmap bitmap) {
         if (bitmap == null) {
             return null;
         }
