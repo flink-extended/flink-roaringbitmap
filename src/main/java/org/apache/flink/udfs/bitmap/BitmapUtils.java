@@ -27,7 +27,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 /** Utility methods for serializing and deserializing {@link RoaringBitmap}. */
-public final class BitmapUtils {
+final class BitmapUtils {
 
     private BitmapUtils() {}
 

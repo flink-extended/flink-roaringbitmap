@@ -17,7 +17,6 @@
 
 package org.apache.flink.udfs.bitmap;
 
-import org.apache.flink.table.functions.AggregateFunction;
 import org.roaringbitmap.RoaringBitmap;
 
 import javax.annotation.Nullable;
@@ -41,12 +40,7 @@ import javax.annotation.Nullable;
  * GROUP BY hour_start;
  * }</pre>
  */
-public class RbOrAggFunction extends AggregateFunction<byte[], BitmapAccumulator> {
-
-    @Override
-    public BitmapAccumulator createAccumulator() {
-        return new BitmapAccumulator();
-    }
+public class RbOrAggFunction extends AbstractRbAggFunction {
 
     /**
      * OR-s the input bitmap into the accumulator.
@@ -55,66 +49,11 @@ public class RbOrAggFunction extends AggregateFunction<byte[], BitmapAccumulator
      * @param bitmapBytes serialized RoaringBitmap bytes to union in;
      *                    null and empty arrays are ignored
      */
-    public void accumulate(BitmapAccumulator acc, @Nullable byte[] bitmapBytes) {
+    public void accumulate(RoaringBitmap acc, @Nullable byte[] bitmapBytes) {
         if (bitmapBytes == null || bitmapBytes.length == 0) {
             return;
         }
-        RoaringBitmap current = acc.bytes == null
-                ? new RoaringBitmap()
-                : BitmapUtils.fromBytes(acc.bytes);
         RoaringBitmap input = BitmapUtils.fromBytes(bitmapBytes);
-        current.or(input);
-        acc.bytes = BitmapUtils.toBytes(current);
-    }
-
-    /**
-     * Merges multiple partial accumulators into one.
-     * Required for session window aggregation and two-phase distributed aggregation.
-     *
-     * @param acc the target accumulator
-     * @param it  the partial accumulators to merge in
-     */
-    public void merge(BitmapAccumulator acc, Iterable<BitmapAccumulator> it) {
-        RoaringBitmap result = acc.bytes == null
-                ? new RoaringBitmap()
-                : BitmapUtils.fromBytes(acc.bytes);
-        for (BitmapAccumulator other : it) {
-            if (other != null && other.bytes != null) {
-                RoaringBitmap otherBitmap = BitmapUtils.fromBytes(other.bytes);
-                if (otherBitmap != null) {
-                    result.or(otherBitmap);
-                }
-            }
-        }
-        acc.bytes = BitmapUtils.toBytes(result);
-    }
-
-    /**
-     * Resets the accumulator to an empty state.
-     *
-     * @param acc the accumulator to reset
-     */
-    public void resetAccumulator(BitmapAccumulator acc) {
-        acc.bytes = null;
-    }
-
-    /**
-     * Returns the serialized union bitmap as a byte array.
-     *
-     * @param acc the final accumulator
-     * @return serialized RoaringBitmap bytes, or null if nothing was accumulated
-     */
-    @Override
-    @Nullable
-    public byte[] getValue(BitmapAccumulator acc) {
-        if (acc == null || acc.bytes == null) {
-            return null;
-        }
-        RoaringBitmap bitmap = BitmapUtils.fromBytes(acc.bytes);
-        if (bitmap == null) {
-            return null;
-        }
-        bitmap.runOptimize();
-        return BitmapUtils.toBytes(bitmap);
+        acc.or(input);
     }
 }
